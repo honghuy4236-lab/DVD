@@ -25,7 +25,6 @@
            class="{{ 'is-active' if request.endpoint in ['admin.list_products', 'admin.add_product', 'admin.edit_product'] else '' }}">Sản phẩm</a>
         <a href="{{ url_for('admin.list_orders') }}"
            class="{{ 'is-active' if request.endpoint in ['admin.list_orders', 'admin.order_detail'] else '' }}">Đơn hàng</a>
-      </nav>
 
       <div class="admin-sidebar__footer">
         <a href="{{ url_for('main.index') }}">← Xem cửa hàng</a>

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Đặt hàng thành công{% endblock %}
+
+{% block content %}
+<div class="container success-box">
+  <h1>Đặt hàng thành công!</h1>
+  <p>Cảm ơn bạn đã ủng hộ nghệ sĩ Việt. Mã đơn hàng của bạn:</p>
+  <div class="order-code">{{ order.order_code }}</div>
+
+  {% if order.qr_code_image %}
+    <div class="payment-box" style="text-align:center; max-width:340px; margin-left:auto; margin-right:auto;">
+      <img class="payment-box__bank-logo" src="{{ url_for('static', filename='img/bank-logo.png') }}" alt="Logo ngân hàng">
+
+      <div class="qr-frame" style="display:inline-block; margin:0 auto;">
+        <img src="{{ order.qr_code_image }}" alt="Mã QR chuyển khoản đơn hàng {{ order.order_code }}" style="display:block; margin:0 auto;">
+      </div>
+
+      <div class="payment-box__info" style="text-align:left;">
+        <div class="payment-box__row">
+          <span>Ngân hàng</span>
+          <strong>{{ config.BANK_ID }}</strong>
+        </div>
+        <div class="payment-box__row">
+          <span>Số tài khoản</span>
+          <strong>{{ config.BANK_ACCOUNT_NO }}</strong>
+        </div>
+        <div class="payment-box__row">
+          <span>Chủ tài khoản</span>
+          <strong>{{ config.BANK_ACCOUNT_NAME }}</strong>
+        </div>
+        <div class="payment-box__row">
+          <span>Nội dung CK</span>
+          <strong>Thanh toan don {{ order.order_code }}</strong>
+        </div>
+        <div class="payment-box__row payment-box__row--total">
+          <span>Số tiền cần chuyển</span>
+          <strong>{{ '{:,.0f}'.format(order.total_amount) }}đ</strong>
+        </div>
+      </div>
+    </div>
+    <p style="color: var(--color-text-muted); font-size:.9rem;">
+      Quét mã bằng app ngân hàng/ví điện tử để chuyển khoản — số tiền và nội dung đã tự điền sẵn.
+    </p>
+  {% endif %}
+
+  <div class="order-summary" style="text-align:left; margin-top: 24px;">
+    <h3>Chi tiết đơn hàng</h3>
+    {% for item in order.items %}
+      <div class="order-summary__row">
+        <span>{{ item.product.title }} × {{ item.quantity }}</span>
+        <span>{{ '{:,.0f}'.format(item.subtotal) }}đ</span>
+      </div>
+    {% endfor %}
+    <div class="order-summary__total">
+      <span>Tổng cộng</span>
+      <span>{{ '{:,.0f}'.format(order.total_amount) }}đ</span>
+    </div>
+  </div>
+
+  <div style="margin-top: 32px;">
+    <a class="btn" href="{{ url_for('main.index') }}">Về trang chủ</a>
+  </div>
+</div>
+{% endblock %}

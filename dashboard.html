@@ -1,0 +1,47 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Tổng quan{% endblock %}
+
+{% block admin_content %}
+<div class="admin-topbar"><h1>Tổng quan</h1></div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-card__label">Nghệ sĩ</div>
+    <div class="stat-card__value">{{ stats.artist_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__label">Sản phẩm</div>
+    <div class="stat-card__value">{{ stats.product_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__label">Đơn hàng</div>
+    <div class="stat-card__value">{{ stats.order_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__label">Doanh thu (trừ đơn đã huỷ)</div>
+    <div class="stat-card__value">{{ '{:,.0f}'.format(stats.revenue) }}đ</div>
+  </div>
+</div>
+
+<h2 style="font-size:1.1rem; margin-bottom:16px;">Đơn hàng gần đây</h2>
+{% if recent_orders %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for o in recent_orders %}
+        <tr>
+          <td>{{ o.order_code }}</td>
+          <td>{{ o.customer_name }}</td>
+          <td>{{ '{:,.0f}'.format(o.total_amount) }}đ</td>
+          <td><span class="status-badge {{ o.status|status_class }}">{{ o.status }}</span></td>
+          <td><a href="{{ url_for('admin.order_detail', order_id=o.id) }}">Xem</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="color:var(--color-text-muted);">Chưa có đơn hàng nào.</p>
+{% endif %}
+{% endblock %}

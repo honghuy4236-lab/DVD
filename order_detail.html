@@ -1,0 +1,66 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Đơn {{ order.order_code }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-topbar"><h1>Đơn hàng {{ order.order_code }}</h1></div>
+
+<div style="display:grid; grid-template-columns: 1fr 300px; gap:32px;">
+  <div>
+    <h3 style="font-size:1rem;">Sản phẩm</h3>
+    <table class="data-table">
+      <thead><tr><th>Sản phẩm</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+      <tbody>
+        {% for item in order.items %}
+          <tr>
+            <td>{{ item.product.title }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ '{:,.0f}'.format(item.unit_price) }}đ</td>
+            <td>{{ '{:,.0f}'.format(item.subtotal) }}đ</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="text-align:right; font-weight:700; margin-top:12px;">
+      Tổng cộng: {{ '{:,.0f}'.format(order.total_amount) }}đ
+    </p>
+
+    <h3 style="font-size:1rem; margin-top:32px;">Thông tin giao hàng</h3>
+    <p>
+      {{ order.customer_name }} — {{ order.customer_email }}
+      {% if order.customer_phone %} — {{ order.customer_phone }}{% endif %}
+    </p>
+    <p style="color:var(--color-text-muted);">{{ order.shipping_address }}</p>
+  </div>
+
+  <div class="stat-card" style="height:fit-content;">
+    <div class="stat-card__label">Trạng thái hiện tại</div>
+    <div style="margin: 10px 0 20px;">
+      <span class="status-badge {{ order.status|status_class }}">{{ order.status }}</span>
+    </div>
+
+    <form method="post">
+      <div class="field">
+        <label for="status">Cập nhật trạng thái</label>
+        <select id="status" name="status">
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn--block">Lưu trạng thái</button>
+    </form>
+
+    {% if order.qr_code_image %}
+      <div class="qr-frame" style="margin-top:20px;">
+        <img src="{{ order.qr_code_image }}" style="width:140px; height:140px;">
+      </div>
+      <div style="margin-top:14px; font-size:.82rem; color:var(--color-text-muted);">
+        <div>Ngân hàng: <strong style="color:var(--color-text);">{{ config.BANK_ID }}</strong></div>
+        <div>STK: <strong style="color:var(--color-text);">{{ config.BANK_ACCOUNT_NO }}</strong></div>
+        <div>Chủ TK: <strong style="color:var(--color-text);">{{ config.BANK_ACCOUNT_NAME }}</strong></div>
+        <div>Số tiền: <strong style="color:var(--color-accent);">{{ '{:,.0f}'.format(order.total_amount) }}đ</strong></div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

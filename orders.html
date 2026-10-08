@@ -14,7 +14,7 @@
         <tr>
           <td>{{ o.order_code }}</td>
           <td>{{ o.customer_name }}</td>
-          <td>{{ o.created_at|vn_time }}</td>
+          <td>{{ o.created_at.strftime('%d/%m/%Y %H:%M') if o.created_at else '' }}</td>
           <td>{{ '{:,.0f}'.format(o.total_amount) }}đ</td>
           <td><span class="status-badge {{ o.status|status_class }}">{{ o.status }}</span></td>
           <td><a href="{{ url_for('admin.order_detail', order_id=o.id) }}">Xem</a></td>

@@ -1,0 +1,115 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}{{ 'Sửa sản phẩm' if product else 'Thêm sản phẩm' }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-topbar"><h1>{{ 'Sửa sản phẩm' if product else 'Thêm sản phẩm mới' }}</h1></div>
+
+<form method="post" enctype="multipart/form-data" style="max-width:640px;">
+
+  <fieldset class="form-section">
+    <legend>Nghệ sĩ</legend>
+    <div class="field">
+      <label for="artist_id">Chọn nghệ sĩ có sẵn</label>
+      <select id="artist_id" name="artist_id">
+        <option value="">-- Không chọn --</option>
+        {% for a in artists %}
+          <option value="{{ a.id }}"
+            {% if product and product.artist_id == a.id %}selected
+            {% elif form.get('artist_id') == a.id|string %}selected{% endif %}>
+            {{ a.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <p style="color: var(--color-text-muted); font-size: .85rem; margin: 16px 0 10px;">— hoặc tạo nghệ sĩ mới —</p>
+
+    <div class="field">
+      <label for="new_artist_name">Tên nghệ sĩ mới</label>
+      <input type="text" id="new_artist_name" name="new_artist_name" value="{{ form.get('new_artist_name', '') }}">
+    </div>
+    <div class="field">
+      <label for="new_artist_bio">Tiểu sử ngắn</label>
+      <textarea id="new_artist_bio" name="new_artist_bio" rows="2">{{ form.get('new_artist_bio', '') }}</textarea>
+    </div>
+    <div class="field">
+      <label for="new_artist_avatar">Ảnh đại diện (nếu tạo mới)</label>
+      <input type="file" id="new_artist_avatar" name="new_artist_avatar" accept="image/*">
+    </div>
+  </fieldset>
+
+  <fieldset class="form-section">
+    <legend>Thông tin sản phẩm</legend>
+
+    <div class="field">
+      <label for="title">Tên Album / Sản phẩm *</label>
+      <input type="text" id="title" name="title"
+             value="{{ product.title if product else form.get('title', '') }}" required>
+    </div>
+
+    <div class="field">
+      <label for="category">Danh mục *</label>
+      <select id="category" name="category">
+        {% for c in categories %}
+          <option value="{{ c }}"
+            {% if (product and product.category == c) or form.get('category') == c %}selected{% endif %}>
+            {{ c }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="display:flex; gap:20px;">
+      <div class="field" style="flex:1;">
+        <label for="price">Giá bán (VNĐ) *</label>
+        <input type="number" id="price" name="price" min="0" step="1000"
+               value="{{ product.price if product else form.get('price', '') }}" required>
+      </div>
+      <div class="field" style="flex:1;">
+        <label for="stock">Số lượng tồn *</label>
+        <input type="number" id="stock" name="stock" min="0"
+               value="{{ product.stock if product else form.get('stock', 0) }}" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="description">Mô tả sản phẩm</label>
+      <textarea id="description" name="description" rows="3">{{ product.description if product else form.get('description', '') }}</textarea>
+    </div>
+  </fieldset>
+
+  <fieldset class="form-section">
+    <legend>Ảnh bìa &amp; nhạc nghe thử</legend>
+
+    {% if product and product.cover_image %}
+      <img class="table-thumb" style="width:100px; height:100px; margin-bottom:12px;"
+           src="{{ url_for('static', filename=product.cover_image) }}" alt="{{ product.title }}">
+    {% endif %}
+    <div class="field">
+      <label for="cover_image">{{ 'Thay ảnh bìa' if product else 'Ảnh bìa' }}</label>
+      <input type="file" id="cover_image" name="cover_image" accept="image/*">
+    </div>
+
+    {% if product and product.demo_audio_file %}
+      <audio controls preload="none" style="margin-bottom:12px;">
+        <source src="{{ url_for('static', filename=product.demo_audio_file) }}">
+      </audio>
+    {% endif %}
+    <div class="field">
+      <label for="demo_audio_file">{{ 'Thay file nhạc' if product else 'File nhạc nghe thử' }}</label>
+      <input type="file" id="demo_audio_file" name="demo_audio_file" accept="audio/*">
+    </div>
+  </fieldset>
+
+  <fieldset class="form-section">
+    <legend>Danh sách bài hát</legend>
+    <div class="field">
+      <label for="tracks">Mỗi dòng một bài, theo mẫu: Tên bài hát | 03:45</label>
+      <textarea id="tracks" name="tracks" rows="5"
+                placeholder="Vô Đối | 03:12&#10;Bo | 02:58">{{ form.get('tracks', tracks_text) }}</textarea>
+    </div>
+  </fieldset>
+
+  <button type="submit" class="btn btn--block">Lưu sản phẩm</button>
+</form>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ artist.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="artist-header">
+    {% if artist.avatar %}
+      <img class="artist-header__avatar" src="{{ url_for('static', filename=artist.avatar) }}" alt="{{ artist.name }}">
+    {% else %}
+      <div class="artist-header__avatar"></div>
+    {% endif %}
+    <div>
+      <h1>{{ artist.name }}</h1>
+      <p class="artist-header__bio">{{ artist.bio or 'Chưa có tiểu sử.' }}</p>
+    </div>
+  </div>
+</div>
+
+<section class="section container">
+  <div class="section-heading"><h2>Sản phẩm của {{ artist.name }}</h2></div>
+  {% if artist.products %}
+    <div class="product-grid">
+      {% for product in artist.products %}
+        <article class="product-card">
+          <a href="{{ url_for('product.detail', product_id=product.id) }}">
+            <div class="product-card__cover"
+                 {% if product.cover_image %}style="background-image:url('{{ url_for('static', filename=product.cover_image) }}')"{% endif %}></div>
+          </a>
+          <div class="product-card__body">
+            <span class="product-card__category">{{ product.category }}</span>
+            <a class="product-card__title" href="{{ url_for('product.detail', product_id=product.id) }}">{{ product.title }}</a>
+            <div class="product-card__footer">
+              <span class="price">{{ '{:,.0f}'.format(product.price) }}đ</span>
+              <a class="btn btn--ghost" href="{{ url_for('product.detail', product_id=product.id) }}">Xem</a>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">Nghệ sĩ chưa có sản phẩm nào.</div>
+  {% endif %}
+</section>
+{% endblock %}

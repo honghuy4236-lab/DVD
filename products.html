@@ -1,0 +1,45 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Sản phẩm{% endblock %}
+
+{% block admin_content %}
+<div class="admin-topbar">
+  <h1>Sản phẩm</h1>
+  <a class="btn" href="{{ url_for('admin.add_product') }}">+ Thêm sản phẩm</a>
+</div>
+
+{% if products %}
+  <table class="data-table">
+    <thead>
+      <tr><th></th><th>Tên</th><th>Nghệ sĩ</th><th>Danh mục</th><th>Giá</th><th>Tồn</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+        <tr>
+          <td>
+            {% if p.cover_image %}
+              <img class="table-thumb" src="{{ url_for('static', filename=p.cover_image) }}" alt="{{ p.title }}">
+            {% else %}
+              <div class="table-thumb"></div>
+            {% endif %}
+          </td>
+          <td>{{ p.title }}</td>
+          <td>{{ p.artist.name }}</td>
+          <td>{{ p.category }}</td>
+          <td>{{ '{:,.0f}'.format(p.price) }}đ</td>
+          <td>{{ p.stock }}</td>
+          <td style="text-align:right; white-space:nowrap;">
+            <a class="btn btn--ghost icon-btn" href="{{ url_for('product.detail', product_id=p.id) }}">Xem</a>
+            <a class="btn btn--ghost icon-btn" href="{{ url_for('admin.edit_product', product_id=p.id) }}">Sửa</a>
+            <form style="display:inline;" method="post" action="{{ url_for('admin.delete_product', product_id=p.id) }}"
+                  onsubmit="return confirm('Xoá sản phẩm này?');">
+              <button class="btn btn--ghost icon-btn" type="submit">Xoá</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="color:var(--color-text-muted);">Chưa có sản phẩm nào.</p>
+{% endif %}
+{% endblock %}

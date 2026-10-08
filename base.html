@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='Favicon.png') }}" type="image/png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}H-DVD{% endblock %} — Đĩa & Merch Nghệ Sĩ Việt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <video autoplay muted loop playsinline id="bg-video">
+    <source src="{{ url_for('static', filename='bg_video.mp4') }}" type="video/mp4">
+  </video>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="logo" href="{{ url_for('main.index') }}">
+        <img src="{{ url_for('static', filename='Favicon.png') }}" alt="Logo H-DVD" style="height: 30px; width: auto; object-fit: contain;">
+        H<span>-DVD</span>
+      </a>
+      <form class="search-form" method="get" action="{{ url_for('main.index') }}">
+        <input type="text" name="q" placeholder="Tìm album, nghệ sĩ..." value="{{ request.args.get('q', '') }}">
+        <button type="submit">Tìm</button>
+      </form>
+
+      <nav class="main-nav">
+        <a href="{{ url_for('main.index') }}">Trang chủ</a>
+        {% set cart_count = session.get('cart', {}).values() | sum %}
+        <a class="cart-link" href="{{ url_for('cart.view_cart') }}">
+          Giỏ hàng
+          {% if cart_count %}
+            <span id="cart-count" class="cart-badge">{{ cart_count }}</span>
+          {% else %}
+            <span id="cart-count" class="cart-badge" style="display: none;">0</span>
+          {% endif %}
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container">
+          <ul class="flash-list">
+            {% for category, message in messages %}
+              <li class="flash flash-{{ category }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      H-DVD — Đồ án học phần thương mại điện tử. Website bán đĩa Vinyl/CD/Cassette, USB Album &amp; merch nghệ sĩ Việt.
+      <br>
+      <a href="{{ url_for('admin.dashboard') }}" style="font-size:.8rem;">Quản trị</a>
+    </div>
+  </footer>
+
+  <!-- Toast notification -->
+  <div id="cart-toast" class="cart-toast"></div>
+
+  <!-- JavaScript xử lý AJAX giỏ hàng -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const cartForms = document.querySelectorAll('form[action*="them"]');
+
+    cartForms.forEach(form => {
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new FormData(form)
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Cập nhật số lượng trên Header ngay lập tức
+            const cartBadge = document.getElementById('cart-count');
+            if (cartBadge) {
+              cartBadge.textContent = data.cart_count;
+              cartBadge.style.display = 'inline-block';
+              cartBadge.classList.add('cart-badge-bounce');
+              setTimeout(() => cartBadge.classList.remove('cart-badge-bounce'), 400);
+            }
+
+            showToast(data.message);
+          }
+        } catch (err) {
+          console.error('Lỗi AJAX:', err);
+          form.submit();
+        }
+      });
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('cart-toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+  });
+  </script>
+</body>
+</html>

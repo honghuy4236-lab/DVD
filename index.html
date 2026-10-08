@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Trang chủ{% endblock %}
+
+{% block content %}
+<section class="hero container">
+  <h1>Đĩa nhạc, USB Album &amp; merch chính chủ từ nghệ sĩ Việt.</h1>
+  <p>Không qua trung gian, không nén chất lượng — mua trực tiếp từ nghệ sĩ bạn theo dõi, y như trên kệ đĩa của một cửa hàng thật.</p>
+</section>
+
+<section class="container">
+  <div class="chip-row">
+    <button type="button" class="chip {% if not selected_category %}is-active{% endif %}" data-category="all">Tất cả</button>
+    {% for c in categories %}
+      <button type="button" class="chip {% if selected_category == c %}is-active{% endif %}"
+         data-category="{{ c }}">{{ c }}</button>
+    {% endfor %}
+  </div>
+</section>
+
+{% if artists %}
+<section class="section container">
+  <div class="section-heading"><h2>Nghệ sĩ nổi bật</h2></div>
+  <div class="artist-rail">
+    {% for artist in artists %}
+      <a class="artist-pill" href="{{ url_for('artist.detail', artist_id=artist.id) }}">
+        {% if artist.avatar %}
+          <img class="artist-pill__avatar" src="{{ url_for('static', filename=artist.avatar) }}" alt="{{ artist.name }}">
+        {% else %}
+          <div class="artist-pill__avatar"></div>
+        {% endif %}
+        <div class="artist-pill__name">{{ artist.name }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="section container">
+  <div class="section-heading">
+    <h2>{% if keyword or selected_category %}Kết quả{% else %}Mới cập nhật{% endif %}</h2>
+    <span id="product-count-badge" style="color: var(--color-text-muted); font-size: .9rem;">{{ products|length }} sản phẩm</span>
+  </div>
+
+  {% if products %}
+    <div class="product-grid">
+      {% for product in products %}
+        <article class="product-card" data-category="{{ product.category }}">
+          <a href="{{ url_for('product.detail', product_id=product.id) }}">
+            <div class="product-card__cover"
+                 {% if product.cover_image %}style="background-image:url('{{ url_for('static', filename=product.cover_image) }}')"{% endif %}></div>
+          </a>
+          <div class="product-card__body">
+            <span class="product-card__category">{{ product.category }}</span>
+            <a class="product-card__title" href="{{ url_for('product.detail', product_id=product.id) }}">{{ product.title }}</a>
+            <a class="product-card__artist" href="{{ url_for('artist.detail', artist_id=product.artist.id) }}">{{ product.artist.name }}</a>
+            <div class="product-card__footer">
+              <span class="price">{{ '{:,.0f}'.format(product.price) }}đ</span>
+              <form method="post" action="{{ url_for('cart.add', product_id=product.id) }}">
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" {% if not product.is_in_stock %}disabled{% endif %}>
+                  {{ 'Hết hàng' if not product.is_in_stock else 'Thêm' }}
+                </button>
+              </form>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">Không tìm thấy sản phẩm nào phù hợp.</div>
+  {% endif %}
+</section>
+
+<!-- JavaScript xử lý lọc danh mục mượt không tải lại trang -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const chips = document.querySelectorAll('.chip-row .chip');
+  const cards = document.querySelectorAll('.product-card');
+  const countBadge = document.getElementById('product-count-badge');
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', function () {
+      // 1. Chuyển viền/màu active sang chip được click
+      chips.forEach(c => c.classList.remove('is-active'));
+      this.classList.add('is-active');
+
+      const selectedCategory = this.dataset.category;
+      let visibleCount = 0;
+
+      // 2. Lọc sản phẩm tức thì
+      cards.forEach(card => {
+        const cardCategory = card.dataset.category;
+
+        if (selectedCategory === 'all' || cardCategory === selectedCategory) {
+          card.style.display = '';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // 3. Cập nhật con số đếm sản phẩm ngay trên giao diện
+      if (countBadge) {
+        countBadge.textContent = visibleCount + ' sản phẩm';
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

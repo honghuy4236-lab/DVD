@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Giỏ hàng{% endblock %}
+
+{% block content %}
+<section class="container section">
+  <div class="section-heading"><h2>Giỏ hàng của bạn</h2></div>
+
+  {% if items %}
+    <table class="cart-table">
+      <thead>
+        <tr>
+          <th>Sản phẩm</th>
+          <th>Đơn giá</th>
+          <th>Số lượng</th>
+          <th>Thành tiền</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>
+              <div class="cart-row__product">
+                <div class="cart-row__thumb"
+                     {% if item.product.cover_image %}style="background-image:url('{{ url_for('static', filename=item.product.cover_image) }}'); background-size:cover;"{% endif %}></div>
+                <div>
+                  <a href="{{ url_for('product.detail', product_id=item.product.id) }}">{{ item.product.title }}</a>
+                  <div style="font-size:.8rem; color:var(--color-text-muted);">{{ item.product.artist.name }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ '{:,.0f}'.format(item.product.price) }}đ</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ '{:,.0f}'.format(item.subtotal) }}đ</td>
+            <td>
+              <form method="post" action="{{ url_for('cart.remove', product_id=item.product.id) }}">
+                <button type="submit" class="btn btn--ghost">Xoá</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="cart-summary">
+      <span>Tổng cộng</span>
+      <span class="total">{{ '{:,.0f}'.format(total) }}đ</span>
+    </div>
+    <div class="cart-actions">
+      <a class="btn btn--ghost" href="{{ url_for('main.index') }}">Tiếp tục mua sắm</a>
+      <a class="btn" href="{{ url_for('order.checkout') }}">Tiến hành thanh toán</a>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      Giỏ hàng đang trống.
+      <div style="margin-top:16px;"><a class="btn" href="{{ url_for('main.index') }}">Khám phá sản phẩm</a></div>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

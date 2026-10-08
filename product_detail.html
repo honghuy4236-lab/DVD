@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}{{ product.title }}{% endblock %}
+
+{% block content %}
+<div class="container product-detail">
+  <div>
+    <div class="product-detail__cover"
+         {% if product.cover_image %}style="background-image:url('{{ url_for('static', filename=product.cover_image) }}'); background-size:cover; background-position:center;"{% endif %}></div>
+
+    {% if product.demo_audio_file %}
+      <audio controls preload="none">
+        <source src="{{ url_for('static', filename=product.demo_audio_file) }}" type="audio/mpeg">
+        Trình duyệt của bạn không hỗ trợ phát audio.
+      </audio>
+    {% endif %}
+  </div>
+
+  <div>
+    <span class="product-card__category">{{ product.category }}</span>
+    <h1>{{ product.title }}</h1>
+    <p class="product-detail__meta">
+      bởi <a href="{{ url_for('artist.detail', artist_id=product.artist.id) }}">{{ product.artist.name }}</a>
+    </p>
+
+    <p>{{ product.description or '' }}</p>
+
+    <div class="product-detail__price">{{ '{:,.0f}'.format(product.price) }}đ</div>
+
+    {% if product.is_in_stock %}
+      <p class="stock-note {% if product.stock < 10 %}low{% endif %}">
+        Còn {{ product.stock }} sản phẩm{% if product.stock < 10 %} — sắp hết{% endif %}
+      </p>
+      <form class="add-to-cart-form" method="post" action="{{ url_for('cart.add', product_id=product.id) }}">
+        <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}">
+        <button type="submit" class="btn">Thêm vào giỏ hàng</button>
+      </form>
+    {% else %}
+      <p class="stock-note low">Sản phẩm tạm hết hàng</p>
+    {% endif %}
+
+    {% if product.tracks %}
+      <h3>Danh sách bài hát</h3>
+      <ol class="tracklist">
+        {% for track in product.tracks %}
+          <li>
+            <span class="track-number">{{ track.track_number }}</span>
+            <span class="track-name">{{ track.song_name }}</span>
+            <span class="track-duration">{{ track.duration or '' }}</span>
+          </li>
+        {% endfor %}
+      </ol>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

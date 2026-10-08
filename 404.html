@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Không tìm thấy trang{% endblock %}
+
+{% block content %}
+<div class="container not-found">
+  <h1>404</h1>
+  <p>Trang bạn tìm không có trong kho — có thể đĩa này đã ngừng phát hành.</p>
+  <a class="btn" href="{{ url_for('main.index') }}">Về trang chủ</a>
+</div>
+{% endblock %}

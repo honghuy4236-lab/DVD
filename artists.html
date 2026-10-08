@@ -1,0 +1,39 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Nghệ sĩ{% endblock %}
+
+{% block admin_content %}
+<div class="admin-topbar">
+  <h1>Nghệ sĩ</h1>
+  <a class="btn" href="{{ url_for('admin.add_artist') }}">+ Thêm nghệ sĩ</a>
+</div>
+
+{% if artists %}
+  <table class="data-table">
+    <thead><tr><th></th><th>Tên</th><th>Số sản phẩm</th><th></th></tr></thead>
+    <tbody>
+      {% for a in artists %}
+        <tr>
+          <td>
+            {% if a.avatar %}
+              <img class="table-thumb" src="{{ url_for('static', filename=a.avatar) }}" alt="{{ a.name }}">
+            {% else %}
+              <div class="table-thumb"></div>
+            {% endif %}
+          </td>
+          <td>{{ a.name }}</td>
+          <td>{{ a.products|length }}</td>
+          <td style="text-align:right; white-space:nowrap;">
+            <a class="btn btn--ghost icon-btn" href="{{ url_for('admin.edit_artist', artist_id=a.id) }}">Sửa</a>
+            <form style="display:inline;" method="post" action="{{ url_for('admin.delete_artist', artist_id=a.id) }}"
+                  onsubmit="return confirm('Xoá nghệ sĩ này sẽ xoá luôn toàn bộ sản phẩm của họ. Tiếp tục?');">
+              <button class="btn btn--ghost icon-btn" type="submit">Xoá</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="color:var(--color-text-muted);">Chưa có nghệ sĩ nào.</p>
+{% endif %}
+{% endblock %}

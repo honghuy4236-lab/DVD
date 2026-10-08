@@ -1,0 +1,29 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}{{ 'Sửa nghệ sĩ' if artist else 'Thêm nghệ sĩ' }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-topbar"><h1>{{ 'Sửa nghệ sĩ' if artist else 'Thêm nghệ sĩ mới' }}</h1></div>
+
+<form method="post" enctype="multipart/form-data" style="max-width:520px;">
+  <div class="field">
+    <label for="name">Tên nghệ sĩ *</label>
+    <input type="text" id="name" name="name" value="{{ artist.name if artist else '' }}" required>
+  </div>
+  <div class="field">
+    <label for="bio">Tiểu sử</label>
+    <textarea id="bio" name="bio" rows="4">{{ artist.bio if artist else '' }}</textarea>
+  </div>
+
+  {% if artist and artist.avatar %}
+    <img class="table-thumb" style="width:80px; height:80px; margin-bottom:10px;"
+         src="{{ url_for('static', filename=artist.avatar) }}" alt="{{ artist.name }}">
+  {% endif %}
+  <div class="field">
+    <label for="avatar">{{ 'Thay ảnh đại diện' if artist else 'Ảnh đại diện' }}</label>
+    <input type="file" id="avatar" name="avatar" accept="image/*">
+  </div>
+
+  <button type="submit" class="btn">Lưu</button>
+  <a class="btn btn--ghost" href="{{ url_for('admin.list_artists') }}">Huỷ</a>
+</form>
+{% endblock %}
