@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập quản trị — H-DVD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="admin-login-shell">
+    <div class="admin-login-box">
+      <h1 style="margin-bottom: 4px;">H<span style="color:var(--color-accent);">-DVD</span></h1>
+      <p style="color:var(--color-text-muted); margin-bottom:24px;">Đăng nhập khu vực quản trị</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="flash-list">
+            {% for category, message in messages %}
+              <li class="flash flash-{{ category }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post">
+        <div class="field">
+          <label for="username">Tên đăng nhập</label>
+          <input type="text" id="username" name="username" required autofocus>
+        </div>
+        <div class="field">
+          <label for="password">Mật khẩu</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn--block">Đăng nhập</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

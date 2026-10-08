@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Quản trị{% endblock %} — H-DVD Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar__logo">
+        H<span>-DVD</span><br>
+        <small style="color:var(--color-text-muted); font-family:var(--font-body); font-size:.7rem; letter-spacing:.08em;">QUẢN TRỊ</small>
+      </div>
+
+      <nav class="admin-nav">
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="{{ 'is-active' if request.endpoint == 'admin.dashboard' else '' }}">Tổng quan</a>
+        <a href="{{ url_for('admin.list_artists') }}"
+           class="{{ 'is-active' if request.endpoint in ['admin.list_artists', 'admin.add_artist', 'admin.edit_artist'] else '' }}">Nghệ sĩ</a>
+        <a href="{{ url_for('admin.list_products') }}"
+           class="{{ 'is-active' if request.endpoint in ['admin.list_products', 'admin.add_product', 'admin.edit_product'] else '' }}">Sản phẩm</a>
+        <a href="{{ url_for('admin.list_orders') }}"
+           class="{{ 'is-active' if request.endpoint in ['admin.list_orders', 'admin.order_detail'] else '' }}">Đơn hàng</a>
+      </nav>
+
+      <div class="admin-sidebar__footer">
+        <a href="{{ url_for('main.index') }}">← Xem cửa hàng</a>
+        <a href="{{ url_for('admin.logout') }}">Đăng xuất</a>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="flash-list">
+            {% for category, message in messages %}
+              <li class="flash flash-{{ category }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      {% block admin_content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>
