@@ -38,33 +38,21 @@ def add(product_id):
     except ValueError:
         qty = 1
 
-    # Không cho thêm vượt quá số lượng tồn kho
-    in_cart = cart.get(key, 0)
-    can_add = min(qty, max(0, product.stock - in_cart))
-
-    if can_add > 0:
-        cart[key] = in_cart + can_add
-        session.modified = True  # bắt buộc phải gọi vì sửa dict lồng trong session
-
-    if can_add == 0:
-        ok = False
-        message = (f'"{product.title}" đã hết hàng.' if product.stock <= 0
-                   else f'Giỏ hàng đã có đủ số lượng còn lại ({product.stock}) của "{product.title}".')
-    elif can_add < qty:
-        ok = True
-        message = f'Chỉ còn {product.stock} sản phẩm "{product.title}", đã thêm {can_add} vào giỏ.'
-    else:
-        ok = True
-        message = f'Đã thêm "{product.title}" vào giỏ hàng!'
+    cart[key] = cart.get(key, 0) + qty
+    session.modified = True  # bắt buộc phải gọi vì sửa dict lồng trong session
 
     total_count = sum(cart.values())
 
     # Trả về JSON cho Fetch API / AJAX không load lại trang
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({'success': ok, 'message': message, 'cart_count': total_count})
+        return jsonify({
+            'success': True,
+            'message': f'Đã thêm "{product.title}" vào giỏ hàng!',
+            'cart_count': total_count
+        })
 
     # Nếu truy cập dạng form bình thường thì vẫn redirect như cũ
-    flash(message, 'success' if ok else 'warning')
+    flash(f'Đã thêm "{product.title}" vào giỏ hàng.', 'success')
     return redirect(request.referrer or url_for('main.index'))
 
 

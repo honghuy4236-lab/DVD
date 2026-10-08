@@ -1,6 +1,4 @@
 import os
-import uuid
-import hmac
 from functools import wraps
 from werkzeug.utils import secure_filename
 
@@ -33,18 +31,6 @@ def admin_required(view):
     return wrapped
 
 
-def _same(a, b):
-    """So sánh chuỗi theo thời gian không đổi (chống dò mật khẩu qua thời gian phản hồi)."""
-    return hmac.compare_digest(a.encode('utf-8'), b.encode('utf-8'))
-
-
-def _safe_next(target):
-    """Chỉ cho chuyển hướng tới đường dẫn nội bộ của site (chống open redirect: ?next=https://trang-la)."""
-    if target and target.startswith('/') and not target.startswith('//') and '\\' not in target:
-        return target
-    return url_for('admin.dashboard')
-
-
 @admin_bp.route('/dang-nhap', methods=['GET', 'POST'])
 def login():
     if session.get('is_admin'):
@@ -53,12 +39,11 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username', '')
         password = request.form.get('password', '')
-        user_ok = _same(username, current_app.config['ADMIN_USERNAME'])
-        pass_ok = _same(password, current_app.config['ADMIN_PASSWORD'])
-        if user_ok and pass_ok:
+        if (username == current_app.config['ADMIN_USERNAME']
+                and password == current_app.config['ADMIN_PASSWORD']):
             session['is_admin'] = True
             flash('Đăng nhập thành công.', 'success')
-            return redirect(_safe_next(request.args.get('next')))
+            return redirect(request.args.get('next') or url_for('admin.dashboard'))
         flash('Sai tên đăng nhập hoặc mật khẩu.', 'warning')
 
     return render_template('admin/login.html')
@@ -89,43 +74,19 @@ def _save_upload(file_storage, subfolder, allowed_ext):
     if not _extension_ok(file_storage.filename, allowed_ext):
         return None, f'File "{file_storage.filename}" sai định dạng. Cho phép: {", ".join(sorted(allowed_ext))}'
 
-    # Đuôi file lấy từ tên gốc (đã kiểm tra hợp lệ ở trên) vì secure_filename có thể làm mất đuôi
-    # với tên toàn ký tự lạ (VD "漢字.jpg" -> "jpg"). Thêm mã ngẫu nhiên để không bao giờ trùng tên.
-    ext = file_storage.filename.rsplit('.', 1)[1].lower()
-    base = os.path.splitext(secure_filename(file_storage.filename))[0][:60] or 'file'
-    final_name = f'{base}_{uuid.uuid4().hex[:6]}.{ext}'
-
+    filename = secure_filename(file_storage.filename)
     folder = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder)
     os.makedirs(folder, exist_ok=True)
 
+    base, ext = os.path.splitext(filename)
+    final_name = filename
+    counter = 1
+    while os.path.exists(os.path.join(folder, final_name)):
+        final_name = f'{base}_{counter}{ext}'
+        counter += 1
+
     file_storage.save(os.path.join(folder, final_name))
     return f'uploads/{subfolder}/{final_name}', None
-
-
-def _file_in_use(rel_path):
-    """True nếu còn bản ghi nào đang dùng file này (tránh xoá nhầm file dùng chung)."""
-    return bool(
-        Artist.query.filter_by(avatar=rel_path).first()
-        or Product.query.filter(
-            (Product.cover_image == rel_path) | (Product.demo_audio_file == rel_path)
-        ).first()
-    )
-
-
-def _remove_upload(rel_path):
-    """
-    Xoá file đã upload (VD 'uploads/covers/abc.png') khỏi đĩa khi thay ảnh/nhạc hoặc xoá bản ghi.
-    Gọi SAU db.session.commit(). Host miễn phí chỉ có ~512 MB nên không để file mồ côi tích tụ.
-    """
-    if not rel_path or _file_in_use(rel_path):
-        return
-    upload_root = os.path.abspath(current_app.config['UPLOAD_FOLDER'])
-    full = os.path.abspath(os.path.join(current_app.static_folder, rel_path))
-    if full.startswith(upload_root + os.sep) and os.path.isfile(full):   # chặn đường dẫn lạ ../
-        try:
-            os.remove(full)
-        except OSError:
-            pass
 
 
 # ------------------------------------------------------------------
@@ -175,15 +136,12 @@ def _artist_form(artist=None):
             artist = Artist(name=name)
             db.session.add(artist)
 
-        old_avatar = artist.avatar
         artist.name = name
         artist.bio = request.form.get('bio', '').strip()
         if avatar_path:
             artist.avatar = avatar_path
 
         db.session.commit()
-        if avatar_path and old_avatar:
-            _remove_upload(old_avatar)
         flash(f'Đã lưu nghệ sĩ "{artist.name}".', 'success')
         return redirect(url_for('admin.list_artists'))
 
@@ -207,19 +165,9 @@ def edit_artist(artist_id):
 @admin_required
 def delete_artist(artist_id):
     artist = Artist.query.get_or_404(artist_id)
-
-    # order_items.product_id là NOT NULL: xoá sản phẩm đã từng được đặt sẽ gây lỗi 500 và làm mất lịch sử đơn
-    if any(p.order_items for p in artist.products):
-        flash(f'Không thể xoá "{artist.name}" vì một số sản phẩm của họ đã có trong đơn hàng. '
-              'Hãy đặt tồn kho về 0 để ngừng bán.', 'warning')
-        return redirect(url_for('admin.list_artists'))
-
     name = artist.name
-    files = [artist.avatar] + [f for p in artist.products for f in (p.cover_image, p.demo_audio_file)]
     db.session.delete(artist)  # cascade: xoá luôn sản phẩm + track của nghệ sĩ này
     db.session.commit()
-    for f in files:
-        _remove_upload(f)
     flash(f'Đã xoá nghệ sĩ "{name}" (và toàn bộ sản phẩm của họ).', 'info')
     return redirect(url_for('admin.list_artists'))
 
@@ -265,9 +213,7 @@ def _product_form(product=None):
             db.session.add(artist)
             db.session.flush()
         elif artist_id:
-            artist = Artist.query.get(int(artist_id)) if artist_id.isdigit() else None
-            if artist is None:
-                errors.append('Nghệ sĩ đã chọn không tồn tại.')
+            artist = Artist.query.get(int(artist_id))
         elif product:
             artist = product.artist
         else:
@@ -276,15 +222,6 @@ def _product_form(product=None):
         title = request.form.get('title', '').strip()
         if not title:
             errors.append('Vui lòng nhập tên album/sản phẩm.')
-
-        try:
-            price = float(request.form.get('price') or 0)
-            stock = int(request.form.get('stock') or 0)
-        except ValueError:
-            price, stock = 0, 0
-            errors.append('Giá bán và số lượng tồn phải là số.')
-        if price < 0 or stock < 0:
-            errors.append('Giá bán và số lượng tồn không được âm.')
 
         cover_path, err_cover = _save_upload(
             request.files.get('cover_image'), 'covers', ALLOWED_IMAGE_EXT
@@ -312,11 +249,10 @@ def _product_form(product=None):
         else:
             product.artist_id = artist.id
 
-        old_cover, old_audio = product.cover_image, product.demo_audio_file
         product.title = title
         product.category = request.form.get('category', CATEGORY_CHOICES[0])
-        product.price = price
-        product.stock = stock
+        product.price = float(request.form.get('price') or 0)
+        product.stock = int(request.form.get('stock') or 0)
         product.description = request.form.get('description', '').strip()
         if cover_path:
             product.cover_image = cover_path
@@ -340,10 +276,6 @@ def _product_form(product=None):
             ))
 
         db.session.commit()
-        if cover_path and old_cover:
-            _remove_upload(old_cover)
-        if audio_path and old_audio:
-            _remove_upload(old_audio)
         flash(f'Đã lưu sản phẩm "{product.title}".', 'success')
         return redirect(url_for('admin.list_products'))
 
@@ -370,18 +302,9 @@ def edit_product(product_id):
 @admin_required
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
-
-    if product.order_items:
-        flash(f'Không thể xoá "{product.title}" vì đã có trong đơn hàng. '
-              'Hãy đặt tồn kho về 0 để ngừng bán.', 'warning')
-        return redirect(url_for('admin.list_products'))
-
     title = product.title
-    files = [product.cover_image, product.demo_audio_file]
     db.session.delete(product)
     db.session.commit()
-    for f in files:
-        _remove_upload(f)
     flash(f'Đã xoá sản phẩm "{title}".', 'info')
     return redirect(url_for('admin.list_products'))
 
